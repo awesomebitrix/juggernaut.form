@@ -3,5 +3,5 @@
 
 ## Связные компоненты
 
-juggernaut.validator
-juggernaut.security
+- juggernaut.validator
+- juggernaut.security
