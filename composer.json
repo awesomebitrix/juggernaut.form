@@ -1,0 +1,11 @@
+{
+    "name": "irpsv/juggernaut.form",
+    "description": "Компонент, для работы с формами",
+    "license": "MIT",
+    "version": "1.0.0",
+    "autoload": {
+        "psr-4": {
+                "Jugger\\Form\\": "src/"
+        }
+    }
+}
