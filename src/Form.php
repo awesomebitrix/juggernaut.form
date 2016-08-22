@@ -10,10 +10,21 @@ namespace Jugger\Form;
 class Form
 {
     public $id;
-    
+    /**
+     * список атрибутов
+     * @var Attribute[]
+     */
     protected $attributes;
+    /**
+     * Обработчик
+     * @var Handler
+     */
     protected $handler;
-    protected $errors;
+    /**
+     * Список ошибок формы (полей и обработчика)
+     * @var array
+     */
+    protected $errors = [];
 
     public function load(array $fields) {
         
@@ -24,6 +35,12 @@ class Form
     }
     
     public function process() {
-        
+        $attributes = $this->getAttributes();
+        $result = $this->handler->process($attributes);
+        if ($result !== true) {
+            $this->errors[] = $result;
+            $result = false;
+        }
+        return $result;
     }
 }
