@@ -38,15 +38,33 @@ class Attribute
      * Список валидаторов поля
      * @var \Jugger\Validator\Validator[]
      */
-    protected $validators;
+    public $validators = [];
     /**
      * Конструктор
-     * @param string $name название
-     * @param string $hint описание
+     * @param array $config список свойств атрибута
      */
-    public function __construct($name, $hint = null) {
-        $this->name = $name;
-        $this->hint = $hint;
+    public function __construct(array $config) {
+        extract($config);
+        if (isset($name)) {
+            $this->name = $name;
+        }
+        else {
+            throw new Exception("Необходимо указать 'name' атрибута");
+        }
+        if (isset($hint)) {
+            $this->hint = $hint;
+        }
+        if (!isset($validators)) {
+            return;
+        }
+        foreach ($validators as $validator) {
+            if ($validator instanceof Validator) {
+                $this->addValidator($validator);
+            }
+            else {
+                throw new Exception("Параметр 'validator' должен быть списков с экземплярами потомков класса 'Jugger\Validator\Validator'");
+            }
+        }
     }
     /**
      * Валидация значения
@@ -57,7 +75,7 @@ class Attribute
         $this->error = false;
         foreach ($this->validators as $validator) {
             if ($validator->validate($this->value) !== true) {
-                $this->error = $validator->getError();
+                $this->error = get_class($validator);
                 break;
             }
         }
@@ -74,6 +92,12 @@ class Attribute
         }
         else {
             array_push($this->validators, $validator);
+        }
+    }
+    
+    public function addValidators(array $validators) {
+        foreach ($validators as $validator) {
+            $this->addValidator($validator);
         }
     }
 }

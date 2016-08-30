@@ -2,8 +2,6 @@
 
 namespace Jugger\Form;
 
-use Jugger\Validator\Validator;
-
 /**
  * Description of Form
  *
@@ -11,46 +9,51 @@ use Jugger\Validator\Validator;
  */
 class Form
 {
+    /**
+     * Идентификатор формы
+     * при отправке данных все поля записываются в контейнер с ID формы
+     * @var string
+     */
     public $id;
     /**
      * список атрибутов
      * @var Attribute[]
      */
-    protected $attributes;
+    public $attributes;
     /**
      * Обработчик
      * @var Handler
      */
-    protected $handler;
+    public $handler;
     /**
      * Список ошибок формы (полей и обработчика)
      * @var array
      */
-    protected $errors = [];
+    public $errors = [];
     /**
      * Создане формы
      * @param array $attributes список атрибутов формы
      */
-    public function __construct(array $attributes) {
+    public function __construct(array $attributes = []) {
         $this->attributes = [];
         foreach ($attributes as $data) {
             $this->addAttribute($data);
         }
     }
-    
-    public function addAttribute(array $data) {
-        $attribute = new Attribute($data['name']);
-        $attribute->hint = $data['hint'] ?: null;
-        if (!$data['validators']) {
-            return;
+    /**
+     * Добавление атрибута к форму
+     * @param mixed $attribute экземпляр атрибута, или конфигурация для создания атрибута
+     * @throws Exception
+     */
+    public function addAttribute($attribute) {
+        if ($attribute instanceof Attribute) {
+            // pass
         }
-        foreach ($data['validators'] as $validator) {
-            if ($validator instanceof Validator) {
-                $attribute->addValidator($validator);
-            }
-            else {
-                throw new Exception("Параметр 'validator' должен быть списков с экземплярами потомков класса 'Validator'");
-            }
+        elseif (!is_array($attribute)) {
+            throw new Exception("Параметр 'data' должен быть экземпляром класса 'Jugger\Form\Attribute' или массивом конфигурации данного класса");
+        }
+        else {
+            $attribute = new Attribute($attribute);
         }
         $this->attributes[$attribute->name] = $attribute;
     }
@@ -82,7 +85,7 @@ class Form
     public function validate() {
         /* @var $attribute Attribute */
         foreach ($this->attributes as $attribute) {
-            if ($attribute->error) {
+            if ($attribute->validate() === false) {
                 $this->errors[$attribute->name] = $attribute->error;
             }
         }
@@ -92,7 +95,7 @@ class Form
      * Обработка формы
      * @return boolean
      */
-    public function handler() {
+    public function handle() {
         $attributes = $this->getAttributes();
         $result = $this->handler->process($attributes);
         if ($result !== true) {
@@ -100,5 +103,21 @@ class Form
             $result = false;
         }
         return $result;
+    }
+    /**
+     * Последовательная загрузка, валидация и обработка
+     * @param array $fields
+     * @return boolean
+     */
+    public function process($fields) {
+        return $this->load($fields) && $this->validate() && $this->handle();
+    }
+    
+    public function getErrors() {
+        return $this->errors;
+    }
+
+    public function getAttributes() {
+        return $this->attributes;
     }
 }
